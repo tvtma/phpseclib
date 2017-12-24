@@ -108,7 +108,9 @@ class Functional_Net_SSH2Test extends PhpseclibFunctionalTestCase
      */
     public function testExecWithMethodCallback($ssh)
     {
-        $callbackObject = $this->getMock('stdClass', array('callbackMethod'));
+        $callbackObject = $this->getMockBuilder('stdClass')
+            ->setMethods(array('callbackMethod'))
+            ->getMock();
         $callbackObject
             ->expects($this->atLeastOnce())
             ->method('callbackMethod')
@@ -148,5 +150,25 @@ class Functional_Net_SSH2Test extends PhpseclibFunctionalTestCase
         $ssh->exec('ls -latr');
         $ssh->disablePTY();
         $ssh->exec('pwd');
+
+        return $ssh;
+    }
+
+    /**
+     * @depends testDisablePTY
+     * @group github1167
+     */
+    public function testChannelDataAfterOpen($ssh)
+    {
+        $ssh->write("ping 127.0.0.1\n");
+
+        $ssh->enablePTY();
+        $ssh->exec('bash');
+
+        $ssh->write("ls -latr\n");
+
+        $ssh->setTimeout(1);
+
+        $ssh->read();
     }
 }
